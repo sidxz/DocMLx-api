@@ -1,0 +1,39 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+websockets = "*"
+pydantic = "*"
+uvicorn = "*"
+loguru = "*"
+python-dotenv = "*"
+httpx = "*"
+python-socketio = {extras = ["asyncio"], version = "*"}
+fastapi-socketio = "*"
+tqdm = "*"
+langchain = "*"
+langgraph = "*"
+matplotlib = "*"
+langchain-community = "*"
+langchain-openai = "*"
+scikit-learn = "*"
+langchainhub = "*"
+langchain-ollama = "*"
+nomic = "*"
+langchain-nomic = "*"
+bs4 = "*"
+pypdf = "*"
+python-multipart = "*"
+python-magic = "*"
+libmagic = "*"
+pytest = "*"
+ace-tools = "*"
+tabulate = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
