@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 
 from app.service.doc_loader.pdf_loader import load_pdf_document
-from app.service.lm.ppt.extractors.author_extractor import (
-    extract_author_from_first_page,
+from app.service.lm.ppt.extractors.topic_extractor import (
+    extract_topic_from_first_page,
 )
 import pandas as pd
 from tabulate import tabulate
@@ -38,20 +38,20 @@ def process_all_documents(upload_dir: str):
 
         # Process only files (skip directories and other non-file entries)
         if os.path.isfile(file_location):
-            logger.info(f"Processing file: {filename}")
+            logger.debug(f"Processing file: {filename}")
             try:
 
                 combined_content, first_page_content, last_page_content = (
                     load_pdf_document(file_location)
                 )
                 file_name = os.path.basename(file_location)
-                author_info = extract_author_from_first_page(
-                    first_page_content=first_page_content, file_name=file_name
+                topic_info = extract_topic_from_first_page(
+                    first_page_content=first_page_content
                 )
                 results.append(
                     {
                         "File Name": filename,
-                        "Author": author_info["names"] if author_info else "N/A",
+                        "Topic": topic_info["topic"] if topic_info else "N/A",
                     }
                 )
             except Exception as e:

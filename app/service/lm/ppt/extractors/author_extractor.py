@@ -16,7 +16,7 @@ def extract_author_from_first_page(first_page_content: str, file_name: str) -> s
     Returns:
         str: The extracted author(s) name(s) as a string or 'Unknown' if not found.
     """
-    logger.info("Starting author extraction from the first page of the document.")
+    logger.debug("Starting author extraction from the first page of the document.")
 
     parser = JsonOutputParser(pydantic_object=AuthorNames)
 

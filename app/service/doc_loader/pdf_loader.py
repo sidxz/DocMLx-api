@@ -19,7 +19,7 @@ def load_pdf_document(pdf_location: str) -> Tuple[str, str, str]:
     """
     try:
         # Logging the action of loading a PDF document
-        logger.info(f"Loading PDF document from {pdf_location}")
+        logger.debug(f"Loading PDF document from {pdf_location}")
 
         # Initialize the PDF loader
         loader = PyPDFLoader(pdf_location)

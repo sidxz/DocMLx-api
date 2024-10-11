@@ -8,7 +8,7 @@ from fastapi import (
     UploadFile,
     File,
 )
-from app.pipeline.presentation_summary import gen_summary
+from app.pipeline.presentation_summarization import gen_summary
 
 router = APIRouter()
 

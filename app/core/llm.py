@@ -34,7 +34,7 @@ class LanguageModel:
         if type == "ChatOllama":
             try:
                 from langchain_ollama import ChatOllama
-                logger.info(f"Language model initialized: {type} - {model}")
+                logger.debug(f"Language model initialized: {type} - {model}")
                 return ChatOllama(model=model, temperature=temperature)
             except ImportError as e:
                 raise ImportError(
@@ -48,7 +48,7 @@ class LanguageModel:
                 # Adjust model name if "llama3" is used
                 if model == "llama3":
                     model = "gpt-4o"
-                logger.info(f"Language model initialized: {type} - {model}")
+                logger.debug(f"Language model initialized: {type} - {model}")
                 return ChatOpenAI(model=model, temperature=temperature)
             except ImportError as e:
                 raise ImportError(
