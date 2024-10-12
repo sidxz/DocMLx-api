@@ -41,12 +41,10 @@ def process_all_documents(upload_dir: str):
             logger.info(f"Processing file: {filename}")
             try:
 
-                combined_content, first_page_content, last_page_content = (
-                    load_pdf_document(file_location)
-                )
+                pdf_doc = load_pdf_document(file_location)
                 file_name = os.path.basename(file_location)
                 author_info = extract_author_from_first_page(
-                    first_page_content=first_page_content, file_name=file_name
+                    first_page_content=pdf_doc.first_page_content, file_name=file_name
                 )
                 results.append(
                     {

@@ -9,41 +9,50 @@ from app.service.lm.ppt.extractors.author_extractor import (
     extract_author_from_first_page,
 )
 from app.service.lm.ppt.extractors.topic_extractor import extract_topic_from_first_page
+from app.service.lm.ppt.summarizers.slide_summary import create_summary_list
 
 
-def gen_summary(file_location: str):
+def gen_summary(file_location: str) -> Optional[PresentationSummary]:
     """
-    Pre-process the document based on its type. If the document is a PDF, it processes
-    the PDF content; otherwise, logs a warning that the file type is not supported.
+    Generates a summary for a given document if it is a supported file type (PDF).
 
     Args:
         file_location (str): The file path to the document.
-    """
 
+    Returns:
+        Optional[PresentationSummary]: The presentation summary object if the process
+        is successful, otherwise None.
+    """
     presentation_summary = PresentationSummary()
+
     try:
         logger.info("[START] Pre-processing document")
         logger.info(f"Document location: {file_location}")
 
-        # Identify the file type using the magic library
+        # Validate file existence
+        if not os.path.isfile(file_location):
+            logger.error(f"File not found: {file_location}")
+            return None
+
+        # Identify the file type
         file_type = get_file_type(file_location)
 
-        # Check if the file type is a PDF
-        if "PDF" in file_type:
-            logger.info("PDF document detected. Proceeding with PDF processing.")
-            combined_content, first_page_content, last_page_content = load_pdf_document(
-                file_location
-            )
-
-            # Log relevant details for further processing
-            logger.info("PDF processing completed successfully.")
-
-            # logger.info(f"First page content: {first_page_content}")
-        else:
+        if "PDF" not in file_type:
             logger.warning("Unsupported document type. Only PDF files are supported.")
             return None
+
+        logger.info("PDF document detected. Proceeding with PDF processing.")
+        pdf_doc = load_pdf_document(file_location)
+
+        if not pdf_doc or not pdf_doc.first_page_content:
+            logger.error("Failed to load or extract content from PDF document.")
+            return None
+
+    except FileNotFoundError:
+        logger.error(f"File not found: {file_location}")
+        return None
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {str(e)}")
+        logger.error(f"An error occurred during document pre-processing: {str(e)}")
         return None
     finally:
         logger.info("[END] Pre-processing document")
@@ -52,12 +61,13 @@ def gen_summary(file_location: str):
     try:
         logger.info("[START] Extracting author information")
         file_name = os.path.basename(file_location)
-        author = extract_author_from_first_page(
-            first_page_content=first_page_content, file_name=file_name
+        authors = extract_author_from_first_page(
+            first_page_content=pdf_doc.first_page_content, file_name=file_name
         )
-        presentation_summary.author = author
+        presentation_summary.authors = authors
+        logger.info("Author extraction completed successfully.")
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {str(e)}")
+        logger.error(f"An error occurred during author extraction: {str(e)}")
         return None
     finally:
         logger.info("[END] Extracting author information")
@@ -65,10 +75,28 @@ def gen_summary(file_location: str):
     # Topic Extraction
     try:
         logger.info("[START] Extracting topic information")
-        topic = extract_topic_from_first_page(first_page_content=first_page_content)
-        presentation_summary.topic = topic
+        topic = extract_topic_from_first_page(pdf_doc.first_page_content)
+        presentation_summary.title = topic
+        logger.info("Topic extraction completed successfully.")
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {str(e)}")
+        logger.error(f"An error occurred during topic extraction: {str(e)}")
         return None
     finally:
         logger.info("[END] Extracting topic information")
+
+    # Slide Extraction
+    try:
+        logger.info("[START] Extracting slide information")
+        per_slide_summary = create_summary_list(pdf_doc.loaded_docs)
+        presentation_summary.per_slide_summary = per_slide_summary
+        logger.info("Slide extraction completed successfully.")
+    except Exception as e:
+        logger.error(f"An error occurred during slide extraction: {str(e)}")
+        return None
+    finally:
+        logger.info("[END] Extracting slide information")
+
+    logger.info("Document summary successfully generated.")
+    
+    presentation_summary.print()
+    return presentation_summary
