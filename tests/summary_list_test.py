@@ -1,6 +1,8 @@
 import os
 import sys
 import random
+import textwrap
+
 
 # Add the parent directory to the system path for module imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -10,6 +12,7 @@ from app.service.lm.ppt.summarizers.slide_summary import create_summary_list
 import pandas as pd
 from tabulate import tabulate
 from app.core.logging_config import logger
+from app.service.lm.ppt.summarizers.short_summary import generate_short_summary
 
 
 def test_create_summary_list(upload_dir: str):
@@ -37,7 +40,7 @@ def test_create_summary_list(upload_dir: str):
     # Randomly select a file
     random_file = random.choice(files)
     file_location = os.path.join(upload_dir, random_file)
-    file_location = os.path.join(upload_dir, "04_2021-10-05_Bates_GSK Screens_v1.pdf")
+    #file_location = os.path.join(upload_dir, "04_2021-10-05_Bates_GSK Screens_v1.pdf")
 
     logger.debug(f"Processing randomly selected file: {random_file}")
     try:
@@ -58,6 +61,20 @@ def test_create_summary_list(upload_dir: str):
     except Exception as e:
         # Log any error encountered during file processing
         logger.error(f"Error processing file '{random_file}': {str(e)}")
+        
+    # Display a overall short summary
+    try:
+        short_summary = generate_short_summary(summaries)
+        wrapped_summary = textwrap.fill(short_summary, width=100)
+        print("\n" + "-" * 102)
+        print("|{:^100}|".format("SHORT SUMMARY"))
+        print("-" * 102)
+        for line in wrapped_summary.split("\n"):
+            print(f"| {line:<98} |")
+        print("-" * 102)
+        
+    except Exception as e:
+        logger.error(f"Error generating short summary: {str(e)}")
 
 
 # Example usage

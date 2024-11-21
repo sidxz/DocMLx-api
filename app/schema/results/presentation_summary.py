@@ -10,6 +10,12 @@ class PresentationSummary(BaseModel):
     per_slide_summary: Optional[List[str]] = Field(
         default=None, description="List of summarized content of the slides"
     )
+    short_summary: Optional[str] = Field(
+        default=None, description="Short summary of the presentation"
+    )
+    executive_summary: Optional[str] = Field(
+        default=None, description="Executive summary of the presentation"
+    )
 
     def print(self) -> None:
         """

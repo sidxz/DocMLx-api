@@ -9,6 +9,8 @@ from app.service.lm.ppt.extractors.author_extractor import (
     extract_author_from_first_page,
 )
 from app.service.lm.ppt.extractors.topic_extractor import extract_topic_from_first_page
+from app.service.lm.ppt.summarizers.exec_summary import generate_exec_summary
+from app.service.lm.ppt.summarizers.short_summary import generate_short_summary
 from app.service.lm.ppt.summarizers.slide_summary import create_summary_list
 
 
@@ -97,6 +99,32 @@ def gen_summary(file_location: str) -> Optional[PresentationSummary]:
         logger.info("[END] Extracting slide information")
 
     logger.info("Document summary successfully generated.")
-    
-    presentation_summary.print()
+
+    # Short Summary
+    try:
+        logger.info("[START] Generating short summary")
+        short_summary = generate_short_summary(presentation_summary.per_slide_summary)
+        presentation_summary.short_summary = short_summary
+        logger.info("Short summary generated successfully.")
+    except Exception as e:
+        logger.error(f"An error occurred during short summary generation: {str(e)}")
+        return None
+    finally:
+        logger.info("[END] Generating short summary")
+
+    # Executive Summary
+    try:
+        logger.info("[START] Generating executive summary")
+        executive_summary = generate_exec_summary(
+            content=presentation_summary.per_slide_summary,
+            topic=presentation_summary.title,
+        )
+        presentation_summary.executive_summary = executive_summary
+        logger.info("Executive summary generated successfully.")
+    except Exception as e:
+        logger.error(f"An error occurred during executive summary generation: {str(e)}")
+        return None
+    finally:
+        logger.info("[END] Generating executive summary")
+
     return presentation_summary
