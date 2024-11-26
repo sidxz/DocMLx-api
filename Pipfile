@@ -32,6 +32,10 @@ libmagic = "*"
 pytest = "*"
 ace-tools = "*"
 tabulate = "*"
+motor = "*"
+pymongo = "*"
+celery = "*"
+redis = "*"
 
 [dev-packages]
 

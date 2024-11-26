@@ -1,0 +1,22 @@
+
+services:
+  docmlx-api-redis:
+    image: redis:7.0-alpine
+    container_name: docmlx-api-redis
+    ports:
+      - "63791:6379"
+
+  docmlx-api-db:
+    container_name: "docmlx-api-db"
+    image: mongo:jammy
+    restart: always
+    cpus: "0.1"
+    ports:
+      - "27019:27017"
+    volumes:
+      - "./vols/docmlx-db:/data/db"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD}
+
+  

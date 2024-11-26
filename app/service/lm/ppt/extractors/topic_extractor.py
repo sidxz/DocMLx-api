@@ -49,7 +49,7 @@ def extract_topic_from_first_page(first_page_content: str) -> str:
     try:
         topic_response = topic_chain.invoke({"document": first_page_content})
         logger.info(f"Topic extraction response: {topic_response}")
-        return topic_response
+        return topic_response["topic"]
     except Exception as e:
         logger.error(f"An error occurred during topic extraction: {e}")
         return "Unknown"

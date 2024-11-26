@@ -52,9 +52,9 @@ def extract_author_from_first_page(first_page_content: str, file_name: str) -> s
             {"document": first_page_content, "file_name": file_name}
         )
         logger.info(f"Author extraction response: {author_response}")
-        return author_response
+        return author_response["names"]
     except Exception as e:
         logger.error(
             f"An error occurred during author extraction: {e}"
         )
-        return "Unknown"
+        return ["Unknown"]
