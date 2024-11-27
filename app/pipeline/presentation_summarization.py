@@ -4,6 +4,7 @@ from app.core.celery_config import celery_app
 from app.core.logging_config import logger
 from typing import Optional
 
+from app.hooks.registry import execute_hooks
 from app.repositories.document_sync import (
     get_document_by_file_path_sync,
     save_document_sync,
@@ -58,6 +59,15 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
         document.history = copy.deepcopy(existing_document.history)
         if existing_document.doc_hash == document.doc_hash and not force_run:
             logger.info("Document already exists in the database with the same hash.")
+            # Run post hooks
+            logger.info("[START] Looking for POST hooks")
+            hook_pipeline_post = os.getenv("HOOKS_POST")
+            if hook_pipeline_post is not None:
+                logger.info(f"[START] Found {hook_pipeline_post}: Executing Post hooks")
+                execute_hooks(
+                    pipeline=hook_pipeline_post, document=existing_document
+                )
+            
             return existing_document.json_serializable()
         else:
             logger.warning(
@@ -195,6 +205,9 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
             return None
         finally:
             logger.info("[END] Extracting target from summary")
+    # Tags
+    if document.target != "Unknown":
+        document.tags.append(document.target)
 
     # Step 5: Save to MongoDB
     logger.info("[START] Saving results to MongoDB")
@@ -203,5 +216,15 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
     except Exception as e:
         logger.error(f"An error occurred: {e}")
     logger.info("[END] Saving results to MongoDB")
+    
+    # Step 6: Run Post hooks
+    logger.info("[START] Looking for POST hooks")
+    hook_pipeline_post = os.getenv("HOOKS_POST")
+    if hook_pipeline_post is not None:
+        logger.info(f"[START] Found {hook_pipeline_post}: Executing Post hooks")
+        execute_hooks(
+            pipeline=hook_pipeline_post, document=document
+        )
+    logger.info("[END] Post hooks")
 
     return document.json_serializable()

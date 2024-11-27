@@ -19,7 +19,7 @@ def register_hook(pipeline: str, hook: Callable):
     logger.info(f"Hook registered for pipeline '{pipeline}': {hook.__name__}")
 
 
-def execute_hooks(pipeline: str, document, results):
+def execute_hooks(pipeline: str, document):
     """
     Execute all hooks for the specified pipeline with the provided data.
     """
@@ -27,7 +27,7 @@ def execute_hooks(pipeline: str, document, results):
     for hook in hooks:
         try:
             logger.info(f"Executing hook for pipeline '{pipeline}': {hook.__name__}")
-            hook(document=document, results=results)
+            hook(document=document)
         except Exception as e:
             logger.error(
                 f"Error executing hook '{hook.__name__}' in pipeline '{pipeline}': {e}"
