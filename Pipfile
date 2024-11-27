@@ -36,6 +36,7 @@ motor = "*"
 pymongo = "*"
 celery = "*"
 redis = "*"
+nltk = "*"
 
 [dev-packages]
 

@@ -24,19 +24,37 @@ def summarize_slide(slide_content: str) -> str:
     try:
         # Initialize the language model and output parser
         parser = StrOutputParser()
+        # prompt_template = PromptTemplate(
+        #     template="""
+        #     Provide a concise summary of the Slide in a paragraph, the Slide related to the field of TB drug discovery.
+        #     Maintain the original ideas, pick important lines, and avoid drawing any conclusions.
+        #     Include exceptions or negative results, and retain numerical values as is.
+        #     Only summarize content from the Slide, do not add additional context or information that is not in the slide.
+        #     Output only the Summary and do NOT include any introductory statements, explanations, or additional text.
+
+        #     Slide: {slide}
+        #     Summary:
+        #     """,
+        #     input_variables=["slide"],
+        # )
         prompt_template = PromptTemplate(
-            template="""
-            Provide a concise summary of the Slide in a paragraph, the Slide related to the field of TB drug discovery. 
-            Maintain the original ideas, pick important lines, and avoid drawing any conclusions. 
-            Include exceptions or negative results, and retain numerical values as is.
-            Only summarize content from the Slide, do not add additional context or information that is not in the slide.
-            Output only the Summary and do NOT include any introductory statements, explanations, or additional text.
-            
-            Slide: {slide}
-            Summary:
-            """,
-            input_variables=["slide"],
-        )
+    template="""
+    Carefully read the provided Slide and generate a concise summary in one paragraph. The Slide is related to the field of TB drug discovery.
+    The summary must strictly adhere to the content of the Slide, only rephrasing or condensing ideas directly present in the text. 
+    Do not infer, interpret, or add any information not explicitly found in the Slide. 
+    Retain all numerical values as presented and include exceptions or negative results where applicable. 
+    Avoid drawing conclusions, synthesizing data, or incorporating outside knowledge.
+
+    Important: The output must be a factual summary strictly based on the Slide. 
+    Do not include introductory statements, explanations, or any additional text.
+
+    Slide: {slide}
+
+    Summary: <your response>
+    """,
+    input_variables=["slide"],
+)
+
 
         # Initialize the language model instance
         lm_instance = LanguageModel(type="ChatOllama")

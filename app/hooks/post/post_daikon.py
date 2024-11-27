@@ -24,7 +24,7 @@ def post_to_daikon(document):
         if not existing_document:
             # Document does not exist; create a new document entry
             logger.info(
-                "Document does not exist in Daikon. Creating new document entry."
+                f"Document does not exist in Daikon. Creating new document entry {document.file_path}"
             )
             new_document = {
                 "name": document.file_path.split("/")[
@@ -43,7 +43,9 @@ def post_to_daikon(document):
             logger.info("New document successfully created in Daikon.")
         else:
             # Document exists; update it with new information
-            logger.info("Document exists in Daikon. Updating document entry.")
+            logger.info(
+                f"Document exists in Daikon. Updating document entry {document.file_path}"
+            )
             existing_document["docHash"] = document.doc_hash
             existing_document["fileType"] = document.file_type
             existing_document["externalPath"] = document.ext_path

@@ -45,8 +45,8 @@ def add_or_update_document(document_data: Dict[str, Any]) -> Optional[Dict[str, 
     base_url = os.getenv("DAIKON_DOC_URL")
     endpoint = "/docu-store/parsed-docs"
     filtered_data = remove_null_fields(document_data)  # Remove null fields
-    serialized_data = json.dumps(filtered_data)  # Serialize data to JSON
-    print(f"Payload: {serialized_data}")  # Debug the payload
+    #serialized_data = json.dumps(filtered_data)  # Serialize data to JSON
+    #print(f"Payload: {serialized_data}")  # Debug the payload
 
     # Call the API client
     return api_client(

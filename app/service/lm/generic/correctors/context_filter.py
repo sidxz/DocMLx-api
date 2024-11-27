@@ -13,23 +13,26 @@ def summary_context_filter(original_content: str, summary_content: str) -> str:
     # Define the prompt template for extracting author information
     prompt_template = PromptTemplate(
         template="""
-        Given the following "Original Text" and its "Summary", please review the summary and compare it with the original text. 
-        Ensure that every piece of information presented in the summary is supported and directly traceable back to the original text. 
-        If any information in the summary is not explicitly found in the original text, remove it to align precisely with the content and details of the original text.
-        Include exceptions or negative results, and retain numerical values as is.
-        
-        If the Summary is accurate and does not require any changes, just output the Verified Summary to be the same as summary.
-        
-        Important: Output directly the value of Verified Summary (<your response>) and do NOT include any introductory statements, explanations, notes etc.
-        
-        "Original Text":
-        {original_text}
+    Compare the provided "Summary" with the "Original Text" to ensure absolute factual accuracy. 
+    Verify that every statement in the summary is directly supported by and traceable to the original text. 
+    If any part of the summary includes details, interpretations, or data that are not explicitly found in the original text, remove or revise those parts to align exactly with the original text. 
+    Retain numerical values and key details as presented in the original text without modification.
 
-        "Summary":
-        {summary_text}
+    Do not make assumptions, generate new data, or include inferred information. 
+    Exclude hallucinations, synthetic data, or any details that cannot be directly matched to the original text. 
 
-        <your response>
-        """,
+    If the summary is already accurate and factual, output it as is without changes. Otherwise, provide the corrected version.
+
+    Important: Output only the corrected "Verified Summary" without any explanations, notes, or additional text.
+
+    "Original Text":
+    {original_text}
+
+    "Summary":
+    {summary_text}
+
+    Verified Summary: <your response>
+    """,
         input_variables=["original_text", "summary_text"],
     )
 
