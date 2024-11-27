@@ -15,6 +15,7 @@ from app.service.doc_loader.pdf_loader import load_pdf_document
 from app.service.lm.ppt.extractors.author_extractor import (
     extract_author_from_first_page,
 )
+from app.service.lm.ppt.extractors.target_extractor import extract_target_from_first_page, extract_target_from_summary
 from app.service.lm.ppt.extractors.topic_extractor import extract_topic_from_first_page
 from app.service.lm.ppt.summarizers.exec_summary import generate_exec_summary
 from app.service.lm.ppt.summarizers.short_summary import generate_short_summary
@@ -36,7 +37,6 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
     """
 
     logger.info("[START] Generating document ID and metadata")
-    presentation_summary = PresentationSummary()
     document_id = uuid.uuid4()
     run_id = 0
     document = Document(
@@ -103,7 +103,6 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
         authors = extract_author_from_first_page(
             first_page_content=pdf_doc.first_page_content, file_name=file_name
         )
-        presentation_summary.authors = authors
         document.authors = authors
         authors_string = ", ".join(authors)
         document.add_history(run_id ,"Author Extraction", "Success", authors_string)
@@ -119,7 +118,6 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
     try:
         logger.info("[START] Extracting topic information")
         topic = extract_topic_from_first_page(pdf_doc.first_page_content)
-        presentation_summary.title = topic
         document.title = topic
         document.add_history(run_id, "Topic Extraction", "Success", topic)
         logger.info("Topic extraction completed successfully.")
@@ -134,7 +132,6 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
     try:
         logger.info("[START] Extracting slide information")
         per_slide_summary = create_summary_list(pdf_doc.loaded_docs)
-        presentation_summary.per_slide_summary = per_slide_summary
         document.per_slide_summary = per_slide_summary
         document.add_history(run_id, "Slide Extraction", "Success")
         logger.info("Slide extraction completed successfully.")
@@ -150,8 +147,7 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
     # Short Summary
     try:
         logger.info("[START] Generating short summary")
-        short_summary = generate_short_summary(presentation_summary.per_slide_summary)
-        presentation_summary.short_summary = short_summary
+        short_summary = generate_short_summary(document.per_slide_summary)
         document.short_summary = short_summary
         logger.info("Short summary generated successfully.")
         document.add_history(run_id, "Short Summary Generation", "Success", short_summary)
@@ -161,6 +157,44 @@ def gen_summary(self, file_location: str, origin_ext_path: str, force_run: bool)
         return None
     finally:
         logger.info("[END] Generating short summary")
+        
+    # Target Extraction
+    try:
+        logger.info("[START] Extracting target from file name and first page content")
+        target = extract_target_from_first_page(first_page_content=pdf_doc.first_page_content, file_name=file_name)
+        if target == "Unknown":
+            logger.warning("Target extraction returned 'Unknown'.")
+            document.add_history(run_id, "Target Extraction", "Failed", "Target extraction returned 'Unknown'.")
+        else:
+            document.target = target
+            document.add_history(run_id, "Target Extraction", "Success", target)
+    except Exception as e:
+        logger.error(f"An error occurred during target summary generation: {str(e)}")
+        document.add_history(run_id, "Target Summary Generation", "Failed", str(e))
+        return None
+    finally:
+        document.target = target
+        logger.info("[END] Target Extraction from file name and first page content")
+    
+    # Target Extraction from Summary if Target is Unknown
+    if document.target == "Unknown":
+        try:
+            logger.info("[START] Extracting target from summary")
+            # join document.per_slide_summary into a single string
+            summary_string = " ".join(document.per_slide_summary)
+            target = extract_target_from_summary(summary=summary_string, topic=document.title)
+            if target == "Unknown":
+                logger.warning("Target extraction from summary returned 'Unknown'.")
+                document.add_history(run_id, "Target Extraction from Summary", "Failed", "Target extraction from summary returned 'Unknown'.")
+            else:
+                document.target = target
+                document.add_history(run_id, "Target Extraction from Summary", "Success", target)
+        except Exception as e:
+            logger.error(f"An error occurred during target extraction from summary: {str(e)}")
+            document.add_history(run_id, "Target Extraction from Summary", "Failed", str(e))
+            return None
+        finally:
+            logger.info("[END] Extracting target from summary")
 
     # Step 5: Save to MongoDB
     logger.info("[START] Saving results to MongoDB")

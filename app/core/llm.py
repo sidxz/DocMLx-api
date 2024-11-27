@@ -1,6 +1,6 @@
 from app.core.logging_config import logger
 class LanguageModel:
-    def __init__(self, type: str, model: str = "llama3", temperature: float = 0.0):
+    def __init__(self, type: str, model: str = "mistral-nemo:latest", temperature: float = 0.0):
         """
         Initializes a language model based on the specified type and model parameters.
 
@@ -67,3 +67,4 @@ class LanguageModel:
             The language model object.
         """
         return self.llm
+    

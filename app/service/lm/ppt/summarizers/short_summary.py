@@ -30,15 +30,13 @@ def generate_short_summary(content: List[str]) -> str:
         parser = StrOutputParser()
         prompt_template = PromptTemplate(
             template="""
-            With the below provided Content write a cohesive Executive summary of no more than 5 lines.
-            Be extremely cautious with numerical values. Do not attempt to deduce or recalculate any values.
+    Based on the provided content, generate a concise and cohesive Executive Summary in one paragraph, strictly limited to 5 lines. 
+    Ensure numerical values are accurate and unchanged. Avoid any introductions, explanations, or additional text.
 
-            Important : Output only the Executive summary and do NOT include any introductory statements, explanations, notes, or additional text.
+    Content: {content}
 
-            Content: {content}
-
-            Executive summary: <Your Response>
-            """,
+    Executive Summary: <Your Response>
+    """,
             input_variables=["content"],
         )
 

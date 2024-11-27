@@ -1,14 +1,11 @@
 import os
 import sys
-
 # Add the parent directory to the system path for module imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+from app.service.lm.ppt.extractors.target_extractor import extract_target_from_first_page
 
 from app.service.doc_loader.pdf_loader import load_pdf_document
-from app.service.lm.ppt.extractors.author_extractor import (
-    extract_author_from_first_page,
-)
+
 import pandas as pd
 from tabulate import tabulate
 from app.core.logging_config import logger
@@ -43,13 +40,13 @@ def process_all_documents(upload_dir: str):
 
                 pdf_doc = load_pdf_document(file_location)
                 file_name = os.path.basename(file_location)
-                author_info = extract_author_from_first_page(
+                target = extract_target_from_first_page(
                     first_page_content=pdf_doc.first_page_content, file_name=file_name
                 )
                 results.append(
                     {
                         "File Name": filename,
-                        "Author": author_info if author_info else "N/A",
+                        "Target": target if target else "N/A",
                     }
                 )
             except Exception as e:

@@ -18,7 +18,7 @@ def save_document_sync(document: Document) -> UUID4:
         doc_json = document.json_serializable()
         
         # Check if the document already exists
-        result = collection.replace_one({"id": str(document.id)}, doc_json, upsert=True)
+        result = collection.replace_one({"id": document.id}, doc_json, upsert=True)
         
         if result.matched_count > 0:
             logger.info(f"Updated existing document with ID: {document.id}")
