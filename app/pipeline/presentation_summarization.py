@@ -54,6 +54,7 @@ def gen_summary(
     RUN_SHORT_SUMMARY = True
     RUN_TARGET_EXTRACTION = True
     RUN_POST_HOOKS = True
+    SHORT_SUMMARY_THRESHOLD = 160
 
     logger.info("[START] Generating document ID and metadata")
     document_id = uuid.uuid4()
@@ -197,7 +198,7 @@ def gen_summary(
             no_of_words = count_words_nltk(short_summary)
             logger.info(f"Number of words in the summary: {no_of_words}")
 
-            if no_of_words > 200:
+            if no_of_words > SHORT_SUMMARY_THRESHOLD:
                 document.add_history(
                     run_id,
                     "Short Summary Generation",
@@ -212,7 +213,7 @@ def gen_summary(
                 )
 
             document.short_summary = short_summary
-            if no_of_words > 200:
+            if no_of_words > SHORT_SUMMARY_THRESHOLD:
                 document.add_history(
                     run_id,
                     "Short Summary Generation",
@@ -220,7 +221,7 @@ def gen_summary(
                     f"Word count exceeded {no_of_words} : {short_summary}",
                 )
                 logger.warning(
-                    "Word count exceeded 200 in the summary. Will still use the summary."
+                    f"Word count exceeded {SHORT_SUMMARY_THRESHOLD}. Will still use the summary."
                 )
             else:
                 logger.info("Short summary generated successfully.")

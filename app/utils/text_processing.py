@@ -21,7 +21,6 @@ def count_words_nltk(input_string: str) -> int:
     
     # Filter tokens to include only alphabetic words
     words = [token for token in tokens if token.isalpha()]
-    print(words)
     
     return len(words)
 
