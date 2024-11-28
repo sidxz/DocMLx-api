@@ -95,6 +95,7 @@ def filter_bullets_summary(content: str) -> str:
             If no bullet points or lists are present, return the input summary unchanged. 
             Limit the paragraph to 150 words, prioritizing clarity and conciseness. 
             Retain all numerical values and maintain factual accuracy without adding new information.
+            Do not include any introductions, explanations, or extraneous text beyond the summary itself.
 
             Summary:
             {summary}
@@ -164,6 +165,7 @@ def shorten_summary(content: str) -> str:
     The output must consist of complete sentences, avoiding bullet points, lists, or headings. 
     Retain the original meaning, key details, and numerical values as they appear, ensuring factual accuracy. 
     Do not add new information or make assumptions. Focus on summarizing the most important points clearly and concisely.
+    Do not include any introductions, explanations, or extraneous text beyond the summary itself.
 
     Summary:
     {summary}
