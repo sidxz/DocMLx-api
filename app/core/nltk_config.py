@@ -5,7 +5,7 @@ from pathlib import Path
 # Define the NLTK data directory relative to the project root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 NLTK_DATA_PATH = PROJECT_ROOT / "nltk_data"
-
+SPACY_DATA_PATH = PROJECT_ROOT / "spacy_data"
 def setup_nltk():
     """
     Configures NLTK data path and ensures required resources are available.

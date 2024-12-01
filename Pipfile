@@ -38,6 +38,15 @@ celery = "*"
 redis = "*"
 nltk = "*"
 dateparser = "*"
+setuptools = "*"
+wheel = "*"
+cython = "*"
+cymem = "*"
+murmurhash = "*"
+preshed = "*"
+blis = "*"
+thinc = "*"
+spacy = {extras = ["apple"], version = "*"}
 
 [dev-packages]
 
