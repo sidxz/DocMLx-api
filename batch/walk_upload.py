@@ -91,7 +91,7 @@ def upload_file(file_path: str):
         params = {
             "origin_ext_path": origin_ext_path,
             "origin_dir_path": origin_dir_path,
-            "force_rerun": True,
+            "force_rerun": False,
         }
         query_string = urlencode(params)
         full_url = f"{BU_UPLOAD_URL}?{query_string}"
