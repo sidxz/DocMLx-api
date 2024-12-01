@@ -104,7 +104,8 @@ def extract_date(file_name: str, first_page_content: str) -> str:
     file_name_candidates = extract_date_candidates(file_name)
     date = parse_with_dateparser(file_name_candidates)
     if date:
-        return date
+        # convert date to datetime object
+        return dateparser.parse(date)
 
     # Preprocess and extract date from the first page content
     preprocessed_content = preprocess_text(first_page_content)
@@ -112,15 +113,13 @@ def extract_date(file_name: str, first_page_content: str) -> str:
     date = parse_with_dateparser(content_candidates)
 
     if date:
-        return date
+        return dateparser.parse(date)
 
     # Try LLM-based date extraction
     extracted_dates = extract_dates_from_first_page(first_page_content, file_name)
     # parse_with_dateparser(date)
     logger.info(f"Date extraction response: {date}")
     date = parse_with_dateparser(extracted_dates)
-    
-    
 
     # Return extracted date or "Unknown" if no valid date is found
-    return date if date else "Unknown"
+    return dateparser.parse(date) if date else None

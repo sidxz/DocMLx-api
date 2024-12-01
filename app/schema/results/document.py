@@ -101,6 +101,17 @@ class Document(BaseModel):
 
     def json_serializable(self) -> dict:
         """Convert the object to a JSON-serializable dictionary."""
+        
+        def serialize_datetime(dt):
+            """Helper function to convert datetime to ISO format or return None."""
+            if not isinstance(dt, datetime):
+                return None
+            # Ensure the datetime is in UTC
+            dt_utc = dt.astimezone(pytz.utc)
+            # Format as ISO 8601 with 'Z' to indicate UTC
+            return dt_utc.isoformat(timespec='milliseconds').replace("+00:00", "Z")
+    
+    
         return {
             "id": self.id,
             "run_id": self.run_id,
@@ -110,18 +121,12 @@ class Document(BaseModel):
             "doc_hash": self.doc_hash,
             "link": self.link,
             "ext_id": self.ext_id,
-            "date_created": (
-                self.date_created.isoformat() if self.date_created else None
-            ),
-            "date_updated": (
-                self.date_updated.isoformat() if self.date_updated else None
-            ),
+            "date_created": serialize_datetime(self.date_created),
+            "date_updated": serialize_datetime(self.date_updated),
             "created_by": self.created_by,
             "updated_by": self.updated_by,
             "author": self.author,
-            "date_published": (
-                self.date_published.isoformat() if self.date_published else None
-            ),
+            "date_published": serialize_datetime(self.date_published),
             "authors": self.authors,
             "per_slide_summary": self.per_slide_summary,
             "short_summary": self.short_summary,

@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import uuid
 from app.core.celery_config import celery_app
@@ -28,6 +29,7 @@ from app.service.lm.ppt.summarizers.short_summary import (
     shorten_summary,
 )
 from app.service.lm.ppt.summarizers.slide_summary import create_summary_list
+from app.service.nlp.ppt.date_extractor import extract_date
 from app.utils.file_hash import calculate_file_hash
 import copy
 
@@ -51,8 +53,9 @@ def gen_summary(
     RUN_AUTHOR_EXTRACTION = False
     RUN_TOPIC_EXTRACTION = False
     RUN_SLIDE_EXTRACTION = False
-    RUN_SHORT_SUMMARY = True
+    RUN_SHORT_SUMMARY = False
     RUN_TARGET_EXTRACTION = False
+    RUN_DATE_EXTRACTION = True
     RUN_POST_HOOKS = True
     SHORT_SUMMARY_THRESHOLD = 160
 
@@ -72,7 +75,9 @@ def gen_summary(
 
     if existing_document:
         logger.info(f"Document found in the database at {existing_document.file_path}.")
-        run_id = existing_document.run_id + 1 if existing_document.run_id is not None else 0
+        run_id = (
+            existing_document.run_id + 1 if existing_document.run_id is not None else 0
+        )
         document.id = existing_document.id
         document.ext_path = origin_ext_path
         existing_document.ext_path = origin_ext_path
@@ -306,6 +311,35 @@ def gen_summary(
         if document.target != "Unknown":
             document.tags.append(document.target)
 
+    # Date Extraction
+    if RUN_DATE_EXTRACTION:
+        try:
+            logger.info("[START] Extracting date information")
+            file_name = os.path.basename(document.file_path)
+            date_published = extract_date(
+                file_name=file_name, first_page_content=pdf_doc.first_page_content
+            )
+            logger.info(f"Date published: {date_published}")
+            logger.info(f"Date type: {type(date_published)}")
+            # check if type is datetime
+            if date_published is not None and isinstance(date_published, datetime):
+                document.date_published = date_published
+                document.add_history(
+                    run_id, "Date Extraction", "Success", date_published.strftime("%Y-%m-%d")
+                )
+                logger.info("Date extraction completed successfully.")
+            else:
+                document.add_history(
+                    run_id, "Date Extraction", "Failed", "No date found"
+                )
+                logger.warning("No date found in the document.")
+
+        except Exception as e:
+            logger.error(f"An error occurred during date extraction: {str(e)}")
+            document.add_history(run_id, "Date Extraction", "Failed", str(e))
+            return None
+        finally:
+            logger.info("[END] Extracting date information")
     # Step 5: Save to MongoDB
     logger.info("[START] Saving results to MongoDB")
     try:

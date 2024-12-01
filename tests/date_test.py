@@ -45,6 +45,7 @@ def process_all_documents(upload_dir: str):
                 presentation_date = extract_date(
                     file_name=filename, first_page_content=pdf_doc.first_page_content
                 )
+                logger.info(f"Date type: {type(presentation_date)}")
                 if presentation_date is None:
                     presentation_date = "Unknown"
                 results.append(
