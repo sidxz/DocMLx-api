@@ -56,7 +56,7 @@ def gen_summary(
     RUN_SHORT_SUMMARY = True
     RUN_TARGET_EXTRACTION = True
     RUN_DATE_EXTRACTION = True
-    RUN_POST_HOOKS = True
+    RUN_POST_HOOKS = False
     SHORT_SUMMARY_THRESHOLD = 160
 
     logger.info("[START] Generating document ID and metadata")
