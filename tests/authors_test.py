@@ -73,6 +73,6 @@ def process_all_documents(upload_dir: str):
 # Example usage
 if __name__ == "__main__":
     try:
-        process_all_documents("./uploads")
+        process_all_documents("./private_test_data")
     except Exception as e:
         logger.critical(f"An unexpected error occurred: {str(e)}")

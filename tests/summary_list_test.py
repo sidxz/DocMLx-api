@@ -80,6 +80,6 @@ def test_create_summary_list(upload_dir: str):
 # Example usage
 if __name__ == "__main__":
     try:
-        test_create_summary_list("./uploads")
+        test_create_summary_list("./private_test_data")
     except Exception as e:
         logger.critical(f"An unexpected error occurred: {str(e)}")

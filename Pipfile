@@ -46,7 +46,7 @@ murmurhash = "*"
 preshed = "*"
 blis = "*"
 thinc = "*"
-spacy = {extras = ["apple"], version = "*"}
+spacy = "*"
 
 [dev-packages]
 
