@@ -40,7 +40,7 @@ def extract_author_from_first_page(first_page_content: str, file_name: str) -> s
     )
     # Initialize the language model instance
 
-    lm_instance = LanguageModel(type="ChatOllama")
+    lm_instance = LanguageModel(model_type="ChatOllama")
     llm = lm_instance.get_llm()
 
     # Create the author extraction chain using the prompt and the language model

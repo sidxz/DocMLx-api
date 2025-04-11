@@ -39,7 +39,7 @@ def extract_topic_from_first_page(first_page_content: str) -> str:
     )
     # Initialize the language model instance
 
-    lm_instance = LanguageModel(type="ChatOllama")
+    lm_instance = LanguageModel(model_type="ChatOllama")
     llm = lm_instance.get_llm()
 
     # Create the topic extraction chain using the prompt and the language model

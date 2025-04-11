@@ -79,7 +79,7 @@ def summarize_slide(slide_content: str) -> str:
 
 
         # Initialize the language model instance
-        lm_instance = LanguageModel(type="ChatOllama")
+        lm_instance = LanguageModel(model_type="ChatOllama")
         llm = lm_instance.get_llm()
 
         # Create the summary chain using the prompt and the language model

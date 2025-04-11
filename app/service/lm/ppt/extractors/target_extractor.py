@@ -44,7 +44,7 @@ def extract_target_from_first_page(first_page_content: str, file_name: str) -> s
     )
     # Initialize the language model instance
 
-    lm_instance = LanguageModel(type="ChatOllama")
+    lm_instance = LanguageModel(model_type="ChatOllama")
     llm = lm_instance.get_llm()
 
     # Create the target extraction chain using the prompt and the language model
@@ -108,7 +108,7 @@ def extract_target_from_summary(summary: str, topic: str) -> str:
     )
     # Initialize the language model instance
 
-    lm_instance = LanguageModel(type="ChatOllama")
+    lm_instance = LanguageModel(model_type="ChatOllama")
     llm = lm_instance.get_llm()
 
     # Create the target extraction chain using the prompt and the language model
