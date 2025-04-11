@@ -49,7 +49,7 @@ def process_all_documents(upload_dir: str):
                 results.append(
                     {
                         "File Name": filename,
-                        "Topic": topic_info["topic"] if topic_info else "N/A",
+                        "Topic": topic_info if topic_info else "N/A",  # ✅ Use directly
                     }
                 )
             except Exception as e:

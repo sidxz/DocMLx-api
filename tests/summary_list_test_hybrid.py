@@ -13,7 +13,6 @@ from app.service.doc_loader.pdf_to_img_loader import pdf_to_png_byte_streams
 from app.service.lm.ppt.hybrid_summarizers.slide_summary import create_summary_list
 
 
-
 def test_create_summary_list(upload_dir: str):
     """
     Tests the create_summary_list function by processing a randomly selected file
@@ -39,7 +38,7 @@ def test_create_summary_list(upload_dir: str):
     # Randomly select a file
     random_file = random.choice(files)
     file_location = os.path.join(upload_dir, random_file)
-    #file_location = os.path.join(upload_dir, "04_2021-10-05_Bates_GSK Screens_v1.pdf")
+    # file_location = os.path.join(upload_dir, "04_2021-10-05_Bates_GSK Screens_v1.pdf")
 
     logger.debug(f"Processing randomly selected file: {random_file}")
     try:
@@ -47,8 +46,10 @@ def test_create_summary_list(upload_dir: str):
         pdf_doc = load_pdf_document(file_location)
         img_doc = pdf_to_png_byte_streams(file_location)
         # Generate summaries for each slide in the document
-        
-        summaries = create_summary_list(text_documents=pdf_doc.loaded_docs, img_documents=img_doc)
+
+        summaries = create_summary_list(
+            text_documents=pdf_doc.loaded_docs, img_documents=img_doc
+        )
 
         # Prepare results for the table
         results = [
@@ -62,7 +63,7 @@ def test_create_summary_list(upload_dir: str):
     except Exception as e:
         # Log any error encountered during file processing
         logger.error(f"Error processing file '{random_file}': {str(e)}")
-        
+
     # Display a overall short summary
     try:
         short_summary = generate_short_summary(summaries)
@@ -73,7 +74,7 @@ def test_create_summary_list(upload_dir: str):
         for line in wrapped_summary.split("\n"):
             print(f"| {line:<98} |")
         print("-" * 102)
-        
+
     except Exception as e:
         logger.error(f"Error generating short summary: {str(e)}")
 
