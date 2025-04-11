@@ -12,6 +12,7 @@ from app.repositories.document_sync import (
 )
 from app.schema.results.document import Document
 from app.schema.results.presentation_summary import PresentationSummary
+from app.service.doc_loader.pdf_to_img_loader import pdf_to_png_byte_streams
 from app.service.doc_loader.utils import get_file_type
 from app.service.doc_loader.pdf_loader import load_pdf_document
 from app.service.lm.ppt.extractors.author_extractor import (
@@ -22,13 +23,13 @@ from app.service.lm.ppt.extractors.target_extractor import (
     extract_target_from_summary,
 )
 from app.service.lm.ppt.extractors.topic_extractor import extract_topic_from_first_page
+from app.service.lm.ppt.hybrid_summarizers.slide_summary import create_summary_list
 from app.service.lm.ppt.summarizers.exec_summary import generate_exec_summary
 from app.service.lm.ppt.summarizers.short_summary import (
     filter_bullets_summary,
     generate_short_summary,
     shorten_summary,
 )
-from app.service.lm.ppt.summarizers.slide_summary import create_summary_list
 from app.service.nlp.ppt.date_extractor import extract_date
 from app.utils.file_hash import calculate_file_hash
 import copy
@@ -121,6 +122,11 @@ def gen_summary(
         if not pdf_doc or not pdf_doc.first_page_content:
             logger.error("Failed to load or extract content from PDF document.")
             return None
+        
+        img_doc = pdf_to_png_byte_streams(file_location)
+        if not img_doc:
+            logger.error("Failed to convert PDF to images.")
+            return None
 
     except FileNotFoundError:
         logger.error(f"File not found: {file_location}")
@@ -169,7 +175,8 @@ def gen_summary(
     if RUN_SLIDE_EXTRACTION:
         try:
             logger.info("[START] Extracting slide information")
-            per_slide_summary = create_summary_list(pdf_doc.loaded_docs)
+            #per_slide_summary = create_summary_list(pdf_doc.loaded_docs)
+            per_slide_summary = create_summary_list(text_documents=pdf_doc.loaded_docs, img_documents=img_doc)
             document.per_slide_summary = per_slide_summary
             document.add_history(run_id, "Slide Extraction", "Success")
             logger.info("Slide extraction completed successfully.")
