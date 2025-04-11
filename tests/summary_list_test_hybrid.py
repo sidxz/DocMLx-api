@@ -3,18 +3,15 @@ import sys
 import random
 import textwrap
 
-from app.service.doc_loader.pdf_to_img_loader import pdf_to_png_byte_streams
-from app.service.lm.ppt.hybrid_summarizers.slide_summary import create_summary_list
-
-
 # Add the parent directory to the system path for module imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.service.doc_loader.pdf_loader import load_pdf_document
-import pandas as pd
-from tabulate import tabulate
 from app.core.logging_config import logger
 from app.service.lm.ppt.summarizers.short_summary import generate_short_summary
+from app.service.doc_loader.pdf_to_img_loader import pdf_to_png_byte_streams
+from app.service.lm.ppt.hybrid_summarizers.slide_summary import create_summary_list
+
 
 
 def test_create_summary_list(upload_dir: str):
