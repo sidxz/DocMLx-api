@@ -37,23 +37,45 @@ def summarize_slide(slide_content: str) -> str:
         #     """,
         #     input_variables=["slide"],
         # )
+#         prompt_template = PromptTemplate(
+#     template="""
+#     Carefully read the provided Slide and generate a concise summary in one paragraph. The Slide is related to the field of TB drug discovery.
+#     The summary must strictly adhere to the content of the Slide, only rephrasing or condensing ideas directly present in the text. 
+#     Do not infer, interpret, or add any information not explicitly found in the Slide. 
+#     Retain all numerical values as presented and include exceptions or negative results where applicable. 
+#     Avoid drawing conclusions, synthesizing data, or incorporating outside knowledge.
+
+#     Important: The output must be a factual summary strictly based on the Slide. 
+#     Do not include introductory statements, explanations, or any additional text.
+
+#     Slide: {slide}
+
+#     Summary: <your response>
+#     """,
+#     input_variables=["slide"],
+# )
+
         prompt_template = PromptTemplate(
-    template="""
-    Carefully read the provided Slide and generate a concise summary in one paragraph. The Slide is related to the field of TB drug discovery.
-    The summary must strictly adhere to the content of the Slide, only rephrasing or condensing ideas directly present in the text. 
-    Do not infer, interpret, or add any information not explicitly found in the Slide. 
-    Retain all numerical values as presented and include exceptions or negative results where applicable. 
-    Avoid drawing conclusions, synthesizing data, or incorporating outside knowledge.
+            template="""
+            Carefully read the provided Slide text related to TB drug discovery. Generate a concise, one-paragraph summary.
 
-    Important: The output must be a factual summary strictly based on the Slide. 
-    Do not include introductory statements, explanations, or any additional text.
+            The summary must *strictly* adhere to the content of the Slide text, rephrasing or condensing ideas directly present. Do not infer, interpret, or add any information not explicitly found in the
+            Slide.
 
-    Slide: {slide}
+            **Regarding numerical data:**  Retain numerical values *as they appear in the Slide text*. If a number seems potentially inaccurate due to OCR errors or unclear presentation (e.g., a table is poorly
+            formatted), *describe the value generally rather than using the specific number*.  For example, instead of "The efficacy was 2.3%", say "The efficacy was reported as a low percentage" or "The
+            efficacy was reported in the low single digits".  Include exceptions or negative results where applicable.
 
-    Summary: <your response>
-    """,
-    input_variables=["slide"],
-)
+            Avoid drawing conclusions, synthesizing data, or incorporating outside knowledge.  Focus on *what is stated* in the text, not *what it means*.
+
+            Important: The output must be a factual summary strictly based on the Slide text. Do not include introductory statements, explanations, or any additional text.
+
+            Slide: {slide}
+
+            Summary: <your response>
+            """,
+            input_variables=["slide"],
+        )
 
 
         # Initialize the language model instance
