@@ -47,6 +47,7 @@ def test_create_summary_list(upload_dir: str):
         pdf_doc = load_pdf_document(file_location)
         img_doc = pdf_to_png_byte_streams(file_location)
         # Generate summaries for each slide in the document
+        
         summaries = create_summary_list(text_documents=pdf_doc.loaded_docs, img_documents=img_doc)
 
         # Prepare results for the table

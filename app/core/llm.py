@@ -65,52 +65,26 @@ class LanguageModel:
         """
         return self.llm
 
-    def query_with_image(
-        self, prompt: str, image_base64: str, role: str = "user"
-    ) -> str:
-        """
-        Queries the LLM with a prompt and an image.
-
-        Args:
-            prompt (str): Text prompt to send.
-            image_base64 (str): Base64-encoded image string.
-            role (str): Role of the message sender, defaults to "user".
-
-        Returns:
-            str: The content of the LLM response.
-
-        Raises:
-            NotImplementedError: If image input is not supported by the model type.
-            RuntimeError: For any failure during the query execution.
-        """
+    # Modified query_with_image
+    def query_with_image(self, prompt: str, image_base64: str, role: str = "user") -> str:
         if self.model_type != "ChatOllama":
-            logger.error("Image input requested but unsupported by the current model.")
-            raise NotImplementedError(
-                "Image input is only supported for ChatOllama models."
-            )
+            raise NotImplementedError("Image input is only supported for ChatOllama.")
 
         try:
-            logger.debug("Sending query with image to the model.")
-            response = self.llm.invoke(
-                [
-                    {
-                        "role": role,
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{image_base64}"
-                                },
-                            },
-                        ],
-                    }
-                ]
+            # Directly use ollama.chat if you're dealing with images
+            import ollama
+            logger.debug("Sending image+prompt via raw Ollama client.")
+
+            response = ollama.chat(
+                model=self.model_name,
+                messages=[{
+                    'role': role,
+                    'content': prompt,
+                    'images': [image_base64]
+                }]
             )
-            return response.content
+            return response['message']['content']
 
         except Exception as query_err:
-            logger.exception("An error occurred while querying the model with image.")
-            raise RuntimeError(
-                "Failed to process image query with the language model."
-            ) from query_err
+            logger.exception("Failed to query ChatOllama with image input.")
+            raise RuntimeError("Failed to query ChatOllama with image.") from query_err

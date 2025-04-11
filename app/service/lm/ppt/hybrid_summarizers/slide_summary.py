@@ -90,55 +90,45 @@ def create_summary_list(
 ) -> List[str]:
 
     summary_list = []
-    summary_df = pd.DataFrame(
-        columns=["Slide Number", "Original Content", "Summary", "Filtered Summary"]
-    )
+    table_rows = []
 
-    for idx, (text_doc, img_doc) in enumerate(
-        zip(text_documents, img_documents), start=1
-    ):
+    for idx, (text_doc, img_doc) in enumerate(zip(text_documents, img_documents), start=1):
         try:
             logger.info(f"Processing slide {idx}...")
-
-            # Validate inputs
-            if not isinstance(text_doc, Document) or not hasattr(
-                text_doc, "page_content"
-            ):
-                raise TypeError("Invalid text document structure.")
-            if not hasattr(img_doc, "read"):
-                raise TypeError("Image document must be a BytesIO-like object.")
 
             # Generate summary
             summary = summarize_slide(text_doc.page_content, img_doc)
 
-            # Optional context filter (if implemented later)
-            filtered_summary = summary  # Placeholder if future filtering is applied
+            # Optional context filter (not yet used)
+            filtered_summary = summary
 
-            # Append to list and log summary
+            # Append summary to list
             summary_list.append(filtered_summary)
 
-            summary_df.loc[idx] = [
-                idx,
-                text_doc.page_content,
-                summary,
-                filtered_summary,
-            ]
+            # Prepare row for display
+            table_rows.append([idx, filtered_summary])
 
         except TypeError as te:
             logger.error(f"Type error on slide {idx}: {te}")
             summary_list.append("Invalid document type.")
+            table_rows.append([idx, "Invalid document type."])
         except Exception as e:
             logger.error(f"Unexpected error on slide {idx}: {e}", exc_info=True)
             summary_list.append("Error during summarization.")
+            table_rows.append([idx, "Error during summarization."])
 
-    # Display final summary table if any summaries exist
-    if not summary_df.empty:
+    # Display final summary table
+    if table_rows:
+        print("\n" + "-" * 100)
+        print("|{:^96}|".format("SLIDE SUMMARIES"))
+        print("-" * 100)
         table = tabulate(
-            summary_df,
-            headers="keys",
-            maxcolwidths=[None, 40, 40, 40],
+            table_rows,
+            headers=["Slide Number", "Summary"],
             tablefmt="grid",
+            maxcolwidths=[None, 80],  # This may be ignored depending on version
         )
-        logger.info(f"Summary Table:\n{table}")
+        print(table)
 
     return summary_list
+
