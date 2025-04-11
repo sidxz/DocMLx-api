@@ -29,12 +29,19 @@ def generate_short_summary(content: List[str]) -> str:
         parser = StrOutputParser()
         prompt_template = PromptTemplate(
             template="""
-    Using the provided content, create a concise and cohesive summary in a single paragraph strictly limited to 5 lines. 
-    The summary should consist only of complete sentences, without any bullet points or lists. 
-    Retain all numerical values as they appear and ensure the information is accurate and directly based on the content. 
-    Do not include any introductions, explanations, or extraneous text beyond the summary itself.
+    You are given a collection of slide summaries from a scientific presentation on TB drug discovery.
 
-    Content: {content}
+    Write a clear and cohesive paragraph summarizing the overall key points and main findings of the presentation.
+
+    Requirements:
+    - Limit the summary to a single paragraph of no more than 5 lines.
+    - Use only complete, factual sentences based on the content provided.
+    - Retain all numerical values exactly as they appear.
+    - Do not use bullet points, lists, or introductory phrases.
+    - Do not include information not present in the input.
+
+    Content:
+    {content}
 
     Summary: <Your Response>
     """,
