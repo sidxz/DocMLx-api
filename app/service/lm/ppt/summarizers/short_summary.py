@@ -12,7 +12,7 @@ from tabulate import tabulate
 /*
  * Function: generate_short_summary
  * -------------------------------
- * Generates a concise 10-sentence paragraph summarizing key points from slide content.
+ * Generates a concise {len}-sentence paragraph summarizing key points from slide content.
  *
  * Parameters:
  *   content (List[str]) - A list of strings where each element represents the content of a slide.
@@ -21,12 +21,16 @@ from tabulate import tabulate
  *   str - A final summarized paragraph or an appropriate error message in case of failure.
  *
  * Notes:
- *   - Content is summarized in batches of 15 slides to manage LLM prompt size.
+ *   - Content is summarized in batches of {batch_size} slides to manage LLM prompt size.
  *   - Final summary is generated from batch summaries if multiple batches exist.
  *   - Exceptions are caught and logged to avoid leaking sensitive info.
  */
 """
-def generate_short_summary(content: List[str]) -> str:
+
+
+def generate_short_summary(
+    content: List[str], summary_length: str = "ten", batch_size: int = 15
+) -> str:
     logger.debug("Starting short summarization.")
 
     # Validate input
@@ -66,18 +70,24 @@ Summary:
         summary_chain = prompt_template | llm | output_parser
 
         # Break content into manageable batches
-        SUMMARY_LENGTH = "ten"
-        BATCH_SIZE = 15
+        SUMMARY_LENGTH = summary_length
+        BATCH_SIZE = batch_size
         batch_summaries = []
 
         for batch_index in range(0, len(content), BATCH_SIZE):
-            batch = content[batch_index:batch_index + BATCH_SIZE]
+            batch = content[batch_index : batch_index + BATCH_SIZE]
             cleaned_batch = "\n".join(slide.strip() for slide in batch if slide.strip())
 
-            logger.info(f"--- BATCH {batch_index // BATCH_SIZE + 1} CONTENT ---\n{cleaned_batch}")
+            logger.info(
+                f"--- BATCH {batch_index // BATCH_SIZE + 1} CONTENT ---\n{cleaned_batch}"
+            )
 
-            summary = summary_chain.invoke({"content": cleaned_batch, "len": SUMMARY_LENGTH})
-            logger.info(f"--- BATCH {batch_index // BATCH_SIZE + 1} SUMMARY ---\n{summary}")
+            summary = summary_chain.invoke(
+                {"content": cleaned_batch, "len": SUMMARY_LENGTH}
+            )
+            logger.info(
+                f"--- BATCH {batch_index // BATCH_SIZE + 1} SUMMARY ---\n{summary}"
+            )
 
             batch_summaries.append(summary)
 
@@ -86,7 +96,9 @@ Summary:
             final_summary = batch_summaries[0]
         else:
             combined_summary = "\n".join(batch_summaries)
-            final_summary = summary_chain.invoke({"content": combined_summary})
+            final_summary = summary_chain.invoke(
+                {"content": combined_summary, "len": SUMMARY_LENGTH}
+            )
 
         logger.info("--- FINAL SUMMARY ---")
         logger.info(final_summary)
@@ -98,12 +110,14 @@ Summary:
         logger.error(f"Validation error: {validation_error}")
         return "Invalid content."
     except ConnectionError as connection_error:
-        logger.error(f"Connection error while accessing the language model: {connection_error}")
+        logger.error(
+            f"Connection error while accessing the language model: {connection_error}"
+        )
         return "Connection error. Try again later."
     except Exception as unexpected_error:
         logger.exception("Unexpected error occurred during summarization.")
         return "Unknown"
-    
+
 
 def filter_bullets_summary(content: str) -> str:
     """
@@ -154,11 +168,15 @@ def filter_bullets_summary(content: str) -> str:
 
         # Invoke the chain with the provided content
         resummary_response = resummary_chain.invoke({"summary": trimmed_content})
-        
-        logger.debug("___________________________FILTERED SUMMARY___________________________")
+
+        logger.debug(
+            "___________________________FILTERED SUMMARY___________________________"
+        )
         # Invoke the chain with the provided document content
         logger.info(f"{resummary_response}")
-        logger.debug("___________________________END FILTERED SUMMARY___________________________")
+        logger.debug(
+            "___________________________END FILTERED SUMMARY___________________________"
+        )
 
         return resummary_response
 
@@ -171,9 +189,6 @@ def filter_bullets_summary(content: str) -> str:
     except Exception as e:
         logger.exception("An unexpected error occurred during filter_bullets_summary.")
         return "An unexpected error occurred. Please try again later."
-
-
-
 
 
 def shorten_summary(content: str) -> str:
@@ -200,7 +215,7 @@ def shorten_summary(content: str) -> str:
         parser = StrOutputParser()
 
         prompt_template = PromptTemplate(
-    template="""
+            template="""
     Shorten the provided summary to 150 words or fewer while ensuring it remains a cohesive and concise paragraph. 
     The output must consist of complete sentences, avoiding bullet points, lists, or headings. 
     Retain the original meaning, key details, and numerical values as they appear, ensuring factual accuracy. 
@@ -212,8 +227,8 @@ def shorten_summary(content: str) -> str:
 
     Shortened Paragraph (150 words max): <Your Response>
     """,
-    input_variables=["summary"],
-)
+            input_variables=["summary"],
+        )
 
         # Initialize the language model
         lm_instance = LanguageModel(model_type="ChatOllama")
@@ -224,11 +239,15 @@ def shorten_summary(content: str) -> str:
 
         # Invoke the chain with the provided content
         resummary_response = resummary_chain.invoke({"summary": trimmed_content})
-        
-        logger.debug("___________________________SHORTEN SUMMARY___________________________")
+
+        logger.debug(
+            "___________________________SHORTEN SUMMARY___________________________"
+        )
         # Invoke the chain with the provided document content
         logger.info(f"{resummary_response}")
-        logger.debug("___________________________END SHORTEN SUMMARY___________________________")
+        logger.debug(
+            "___________________________END SHORTEN SUMMARY___________________________"
+        )
 
         return resummary_response
 

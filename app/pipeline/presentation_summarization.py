@@ -122,7 +122,7 @@ def gen_summary(
         if not pdf_doc or not pdf_doc.first_page_content:
             logger.error("Failed to load or extract content from PDF document.")
             return None
-        
+
         img_doc = pdf_to_png_byte_streams(file_location)
         if not img_doc:
             logger.error("Failed to convert PDF to images.")
@@ -175,8 +175,10 @@ def gen_summary(
     if RUN_SLIDE_EXTRACTION:
         try:
             logger.info("[START] Extracting slide information")
-            #per_slide_summary = create_summary_list(pdf_doc.loaded_docs)
-            per_slide_summary = create_summary_list(text_documents=pdf_doc.loaded_docs, img_documents=img_doc)
+            # per_slide_summary = create_summary_list(pdf_doc.loaded_docs)
+            per_slide_summary = create_summary_list(
+                text_documents=pdf_doc.loaded_docs, img_documents=img_doc
+            )
             document.per_slide_summary = per_slide_summary
             document.add_history(run_id, "Slide Extraction", "Success")
             logger.info("Slide extraction completed successfully.")
@@ -332,7 +334,10 @@ def gen_summary(
             if date_published is not None and isinstance(date_published, datetime):
                 document.date_published = date_published
                 document.add_history(
-                    run_id, "Date Extraction", "Success", date_published.strftime("%Y-%m-%d")
+                    run_id,
+                    "Date Extraction",
+                    "Success",
+                    date_published.strftime("%Y-%m-%d"),
                 )
                 logger.info("Date extraction completed successfully.")
             else:

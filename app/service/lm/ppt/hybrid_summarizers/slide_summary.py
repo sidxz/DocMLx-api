@@ -25,6 +25,8 @@ from app.utils.img_processing import image_to_base64, preprocess_img_for_llm
  *   str - A factual one-paragraph summary or an error message.
  */
 """
+
+
 def summarize_slide(text_content: str, img_content: BytesIO) -> str:
     logger.debug("Starting slide summarization in hybrid mode.")
 
@@ -32,11 +34,7 @@ def summarize_slide(text_content: str, img_content: BytesIO) -> str:
         # Open and preprocess image
         image = Image.open(img_content)
         processed_image = preprocess_img_for_llm(
-            image,
-            enhance_contrast=True,
-            sharpen=True,
-            resize=True,
-            denoise=True
+            image, enhance_contrast=True, sharpen=True, resize=True, denoise=True
         )
         img_base64 = image_to_base64(processed_image)
     except Exception as e:
@@ -83,14 +81,19 @@ Summary:
         return summary
 
     except ValueError:
-        logger.error("Validation error encountered during summarization.", exc_info=True)
+        logger.error(
+            "Validation error encountered during summarization.", exc_info=True
+        )
         return "Invalid slide content."
     except ConnectionError:
-        logger.error("Connection error while querying the language model.", exc_info=True)
+        logger.error(
+            "Connection error while querying the language model.", exc_info=True
+        )
         return "Connection error. Try again later."
     except Exception:
         logger.error("Unexpected error during slide summarization.", exc_info=True)
         return "Unknown"
+
 
 """
 /*
@@ -108,16 +111,20 @@ Summary:
  *   List[str] - A list of summaries or fallback messages per slide.
  */
 """
+
+
 def create_summary_list(
     text_documents: List[Document],
     img_documents: List[BytesIO],
     apply_context_filter: bool = True,
-    min_content_length: int = 20
+    min_content_length: int = 20,
 ) -> List[str]:
     summary_list = []
     table_rows = []
 
-    for idx, (text_doc, img_doc) in enumerate(zip(text_documents, img_documents), start=1):
+    for idx, (text_doc, img_doc) in enumerate(
+        zip(text_documents, img_documents), start=1
+    ):
         try:
             text = text_doc.page_content
 
@@ -157,9 +164,7 @@ def create_summary_list(
         print("|{:^96}|".format("SLIDE SUMMARIES"))
         print("-" * 100)
         table = tabulate(
-            table_rows,
-            headers=["Slide Number", "Summary"],
-            tablefmt="grid"
+            table_rows, headers=["Slide Number", "Summary"], tablefmt="grid"
         )
         print(table)
 
