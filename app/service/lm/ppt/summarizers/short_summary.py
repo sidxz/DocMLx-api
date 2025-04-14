@@ -8,67 +8,100 @@ from app.service.lm.generic.correctors.context_filter import summary_context_fil
 import pandas as pd
 from tabulate import tabulate
 
+"""
+/*
+ * Function: generate_short_summary
+ * -------------------------------
+ * Generates a concise 10-sentence paragraph summarizing key points from slide content.
+ *
+ * Parameters:
+ *   content (List[str]) - A list of strings where each element represents the content of a slide.
+ *
+ * Returns:
+ *   str - A final summarized paragraph or an appropriate error message in case of failure.
+ *
+ * Notes:
+ *   - Content is summarized in batches of 15 slides to manage LLM prompt size.
+ *   - Final summary is generated from batch summaries if multiple batches exist.
+ *   - Exceptions are caught and logged to avoid leaking sensitive info.
+ */
+"""
 def generate_short_summary(content: List[str]) -> str:
-    """
-    Summarizes the content
-
-    Args:
-        content: The list of text content of the slides.
-
-    Returns:
-        str: The summarized content of the slide or an "Unknown" message if an error occurs.
-    """
     logger.debug("Starting short summarization.")
 
-    contents = " ".join(content)  # Join the list of strings into a single string
-    if contents.strip() == "":
+    # Validate input
+    if not content or all(not slide.strip() for slide in content):
+        logger.warning("Empty or invalid content provided.")
         return "Summary not available."
 
     try:
-        # Initialize the language model and output parser
-        parser = StrOutputParser()
+        # Prompt for summarization with strict formatting and inclusion rules
         prompt_template = PromptTemplate(
             template="""
-    You are given a collection of slide summaries from a scientific presentation on TB drug discovery.
+You are given a collection of slide-level summaries from a tuberculosis drug discovery research presentation.
 
-    Write a clear and cohesive paragraph summarizing the overall key points and main findings of the presentation.
+Your task is to extract and compile the most important takeaways into a single, coherent paragraph of exactly {len} complete sentences.
+If mentioned, capture Mtb target name.
 
-    Requirements:
-    - Limit the summary to a single paragraph of no more than 5 lines.
-    - Use only complete, factual sentences based on the content provided.
-    - Retain all numerical values exactly as they appear.
-    - Do not use bullet points, lists, or introductory phrases.
-    - Do not include information not present in the input.
+Requirements:
+Do not mention that this is a TB drug discovery program — the audience already knows this.
+Limit the text to a single paragraph, no more than {len} lines.
+Condense by selection, not by synthesis. i.e Condense by selecting key points, not by generating new interpretations or rephrasing into novel insights
+Use only complete, factual sentences grounded in the content provided.
+Do not use bullet points, lists, headings, or introductory phrases like "In summary."
+Do not add interpretations, background, or conclusions beyond the provided text.
 
-    Content:
-    {content}
+Important: Your output should only include the final paragraph. Do not include any explanations, instructions, or formatting beyond the paragraph.
+Content:
+{content}
 
-    Summary: <Your Response>
-    """,
-            input_variables=["content"],
+Summary:
+            """,
+            input_variables=["content", "len"],
         )
 
-        # Initialize the language model instance
-        lm_instance = LanguageModel(model_type="ChatOllama")
-        llm = lm_instance.get_llm()
+        # Initialize components
+        output_parser = StrOutputParser()
+        llm = LanguageModel(model_type="ChatOllama").get_llm()
+        summary_chain = prompt_template | llm | output_parser
 
-        # Create the summary chain using the prompt and the language model
-        summary_chain = prompt_template | llm | parser
-        logger.debug("___________________________SHORT SUMMARY___________________________")
-        # Invoke the chain with the provided document content
-        summary_response = summary_chain.invoke({"content": contents})
-        logger.info(f"{summary_response}")
-        logger.debug("___________________________END SHORT SUMMARY___________________________")
-        return summary_response
+        # Break content into manageable batches
+        SUMMARY_LENGTH = "ten"
+        BATCH_SIZE = 15
+        batch_summaries = []
 
-    except ValueError as ve:
-        logger.error(f"Validation error: {ve}")
+        for batch_index in range(0, len(content), BATCH_SIZE):
+            batch = content[batch_index:batch_index + BATCH_SIZE]
+            cleaned_batch = "\n".join(slide.strip() for slide in batch if slide.strip())
+
+            logger.info(f"--- BATCH {batch_index // BATCH_SIZE + 1} CONTENT ---\n{cleaned_batch}")
+
+            summary = summary_chain.invoke({"content": cleaned_batch, "len": SUMMARY_LENGTH})
+            logger.info(f"--- BATCH {batch_index // BATCH_SIZE + 1} SUMMARY ---\n{summary}")
+
+            batch_summaries.append(summary)
+
+        # Final summary generation
+        if len(batch_summaries) == 1:
+            final_summary = batch_summaries[0]
+        else:
+            combined_summary = "\n".join(batch_summaries)
+            final_summary = summary_chain.invoke({"content": combined_summary})
+
+        logger.info("--- FINAL SUMMARY ---")
+        logger.info(final_summary)
+
+        logger.debug("Completed short summarization successfully.")
+        return final_summary
+
+    except ValueError as validation_error:
+        logger.error(f"Validation error: {validation_error}")
         return "Invalid content."
-    except ConnectionError as ce:
-        logger.error(f"Connection error while accessing the language model: {ce}")
+    except ConnectionError as connection_error:
+        logger.error(f"Connection error while accessing the language model: {connection_error}")
         return "Connection error. Try again later."
-    except Exception as e:
-        logger.error("An error occurred during summarization.", exc_info=True)
+    except Exception as unexpected_error:
+        logger.exception("Unexpected error occurred during summarization.")
         return "Unknown"
     
 
