@@ -29,7 +29,7 @@ from tabulate import tabulate
 
 
 def generate_short_summary(
-    content: List[str], summary_length: str = "ten", batch_size: int = 15
+    content: List[str], max_summary_sentences: int = 10, batch_size: int = 15
 ) -> str:
     logger.debug("Starting short summarization.")
 
@@ -70,7 +70,6 @@ Summary:
         summary_chain = prompt_template | llm | output_parser
 
         # Break content into manageable batches
-        SUMMARY_LENGTH = summary_length
         BATCH_SIZE = batch_size
         batch_summaries = []
 
@@ -81,6 +80,8 @@ Summary:
             logger.info(
                 f"--- BATCH {batch_index // BATCH_SIZE + 1} CONTENT ---\n{cleaned_batch}"
             )
+
+            SUMMARY_LENGTH = str(min(len(batch), max_summary_sentences))
 
             summary = summary_chain.invoke(
                 {"content": cleaned_batch, "len": SUMMARY_LENGTH}
@@ -96,6 +97,7 @@ Summary:
             final_summary = batch_summaries[0]
         else:
             combined_summary = "\n".join(batch_summaries)
+            SUMMARY_LENGTH = str(max_summary_sentences)
             final_summary = summary_chain.invoke(
                 {"content": combined_summary, "len": SUMMARY_LENGTH}
             )
@@ -119,7 +121,7 @@ Summary:
         return "Unknown"
 
 
-def filter_bullets_summary(content: str) -> str:
+def filter_bullets_summary(content: str, summary_length: str = "ten") -> str:
     """
     Refactor a given summary into a concise paragraph, maintaining clarity, accuracy, and coherence.
 
@@ -144,20 +146,29 @@ def filter_bullets_summary(content: str) -> str:
 
         prompt_template = PromptTemplate(
             template="""
-            If the provided summary contains bullet points or lists, detect and transform them into a cohesive paragraph. 
+            If the provided summary contains bullet points or lists, detect and transform them into a cohesive paragraph of exactly {len} complete sentences. 
             Ensure the paragraph consists of complete sentences and conveys the same meaning as the original summary. 
             If no bullet points or lists are present, return the input summary unchanged. 
-            Limit the paragraph to 150 words, prioritizing clarity and conciseness. 
-            Retain all numerical values and maintain factual accuracy without adding new information.
-            Do not include any introductions, explanations, or extraneous text beyond the summary itself.
+            
+            Requirements:
+            Do not mention that this is a TB drug discovery program — the audience already knows this.
+            Limit the text to a single paragraph, no more than {len} lines.
+            Condense by selection, not by synthesis. i.e Condense by selecting key points, not by generating new interpretations or rephrasing into novel insights
+            Use only complete, factual sentences grounded in the content provided.
+            Do not use bullet points, lists, headings, or introductory phrases like "In summary."
+            Do not add interpretations, background, or conclusions beyond the provided text.
+
+            Important: Your output should only include the final paragraph. Do not include any explanations, instructions, or formatting beyond the paragraph.
 
             Summary:
             {summary}
 
-            Paragraph (150 words max): <Your Response>
+            Paragraph ({len} lines max): <Your Response>
             """,
-            input_variables=["summary"],
+            input_variables=["summary", "len"],
         )
+
+        SUMMARY_LENGTH = summary_length
 
         # Initialize the language model
         lm_instance = LanguageModel(model_type="ChatOllama")
@@ -167,7 +178,9 @@ def filter_bullets_summary(content: str) -> str:
         resummary_chain = prompt_template | llm | parser
 
         # Invoke the chain with the provided content
-        resummary_response = resummary_chain.invoke({"summary": trimmed_content})
+        resummary_response = resummary_chain.invoke(
+            {"summary": trimmed_content, "len": SUMMARY_LENGTH}
+        )
 
         logger.debug(
             "___________________________FILTERED SUMMARY___________________________"
