@@ -1,4 +1,5 @@
-from fastapi import APIRouter, FastAPI, HTTPException, UploadFile, BackgroundTasks
+from typing import List
+from fastapi import APIRouter, FastAPI, HTTPException, Query, UploadFile, BackgroundTasks
 from fastapi.responses import JSONResponse
 from celery.result import AsyncResult
 from app.pipeline.presentation_summarization import gen_summary
@@ -6,6 +7,9 @@ import shutil
 import os
 from app.core.logging_config import logger
 from urllib.parse import quote, unquote
+
+from app.repositories.document_sync import get_documents_by_authors_sync
+from app.schema.results.document import Document
 
 router = APIRouter()
 
@@ -65,3 +69,19 @@ async def get_task_result(task_id: str):
     if task_result.state == "SUCCESS":
         return {"status": "Completed", "result": task_result.result}
     return {"status": "Not available"}
+
+
+@router.get("/documents/by-authors", response_model=List[Document])
+def fetch_documents_by_authors(authors: List[str] = Query(..., description="List of author names to search for")):
+    """
+    Fetch documents containing any of the provided author names (partial and case-insensitive match).
+    """
+    if not authors:
+        raise HTTPException(status_code=400, detail="At least one author name must be provided.")
+
+    try:
+        documents = get_documents_by_authors_sync(authors)
+        return documents
+    except Exception as e:
+        logger.error(f"Error fetching documents by authors: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve documents.")

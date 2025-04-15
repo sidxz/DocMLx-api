@@ -33,7 +33,38 @@ def save_document_sync(document: Document) -> UUID4:
             detail=f"Failed to save document: {str(e)}"
         )
 
+def get_documents_by_authors_sync(authors: List[str]) -> List[Document]:
+    """
+    Retrieve documents that include any of the given authors (case-insensitive and partial match).
+    
+    Args:
+        authors (List[str]): A list of author names to search for.
 
+    Returns:
+        List[Document]: A list of matched documents.
+    """
+    try:
+        collection = get_sync_collection("documents")
+
+        # Build a list of regex filters for partial, case-insensitive matching
+        regex_conditions = [
+            {"authors": {"$elemMatch": {"$regex": author, "$options": "i"}}}
+            for author in authors
+        ]
+
+        query = {"$or": regex_conditions}
+
+        logger.debug(f"Running author search with query: {query}")
+
+        cursor = collection.find(query)
+        return [Document(**doc) for doc in cursor]
+
+    except PyMongoError as e:
+        logger.error(f"Error retrieving documents by authors (sync): {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving documents by authors: {str(e)}",
+        )
 
 def get_document_by_field_sync(field: str, value: Union[str, UUID4, List[str]]) -> Document:
     """
