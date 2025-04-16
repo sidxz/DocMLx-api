@@ -51,12 +51,12 @@ def gen_summary(
         Optional[PresentationSummary]: The presentation summary object if the process
         is successful, otherwise None.
     """
-    RUN_AUTHOR_EXTRACTION = True
-    RUN_TOPIC_EXTRACTION = True
-    RUN_SLIDE_EXTRACTION = True
-    RUN_SHORT_SUMMARY = True
-    RUN_TARGET_EXTRACTION = True
-    RUN_DATE_EXTRACTION = True
+    RUN_AUTHOR_EXTRACTION = False
+    RUN_TOPIC_EXTRACTION = False
+    RUN_SLIDE_EXTRACTION = False
+    RUN_SHORT_SUMMARY = False
+    RUN_TARGET_EXTRACTION = False
+    RUN_DATE_EXTRACTION = False
     RUN_POST_HOOKS = True
     SHORT_SUMMARY_THRESHOLD = 250
 
@@ -83,8 +83,8 @@ def gen_summary(
         document.ext_path = origin_ext_path
         existing_document.ext_path = origin_ext_path
         document.history = copy.deepcopy(existing_document.history)
-        if existing_document.doc_hash == document.doc_hash and not force_run:
-            logger.info("Document already exists in the database with the same hash.")
+        if existing_document.file_path == document.file_path and not force_run:
+            logger.info("Document already exists in the database.")
             # Run post hooks
             logger.info("[START] Looking for POST hooks")
             hook_pipeline_post = os.getenv("HOOKS_POST")
@@ -95,7 +95,7 @@ def gen_summary(
             return existing_document.json_serializable()
         else:
             logger.warning(
-                "Document exists but hash mismatch or force run is enabled. Proceeding with new processing."
+                "Document exists but force run is enabled. Proceeding with new processing."
             )
             document = copy.deepcopy(existing_document)
 
