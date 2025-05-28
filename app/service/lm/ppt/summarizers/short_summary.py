@@ -29,7 +29,10 @@ from tabulate import tabulate
 
 
 def generate_short_summary(
-    content: List[str], max_summary_sentences: int = 10, batch_size: int = 15
+    content: List[str],
+    BATCH_1_SIZE: int = 2,
+    BATCH_N_SIZE: int = 2,
+    MIDDLE_BATCH_SIZE: int = 10,
 ) -> str:
     logger.debug("Starting short summarization.")
 
@@ -39,74 +42,163 @@ def generate_short_summary(
         return "Summary not available."
 
     try:
-        # Prompt for summarization with strict formatting and inclusion rules
-        prompt_template = PromptTemplate(
+        # --- Prompt templates ---
+        batch_prompt_template = PromptTemplate(
+            input_variables=["content"],
             template="""
 You are given a collection of slide-level summaries from a tuberculosis drug discovery research presentation.
 
-Your task is to extract and compile the most important takeaways into a single, coherent paragraph of exactly {len} complete sentences.
-If mentioned, capture Mtb target name.
+Task:
+- From the provided content, **select at most five complete sentences** that best represent the key takeaways.
+- You are NOT allowed to rephrase, summarize, or generate new interpretations.
+- **Only pick sentences that are already present verbatim in the provided content.**
+- If the content has fewer than five sentences, include as many as possible without inventing or completing any.
 
 Requirements:
-Do not mention that this is a TB drug discovery program — the audience already knows this.
-Limit the text to a single paragraph, no more than {len} lines.
-Condense by selection, not by synthesis. i.e Condense by selecting key points, not by generating new interpretations or rephrasing into novel insights
-Use only complete, factual sentences grounded in the content provided.
-Do not use bullet points, lists, headings, or introductory phrases like "In summary."
-Do not add interpretations, background, or conclusions beyond the provided text.
+- **Do not mention that this is a TB drug discovery program** — the audience already knows this.
+- The output must be a single paragraph (no more than 5 lines).
+- Do not use bullet points, lists, headings, or introductory phrases.
+- Do not add context, interpretations, or conclusions beyond the provided text.
+- Maintain original phrasing, do not alter abbreviations, terminology, or emphasis used in the slides.
 
-Important: Your output should only include the final paragraph. Do not include any explanations, instructions, or formatting beyond the paragraph.
+Important:
+- Your output must be only the final paragraph with the selected sentences.
+- Do not include explanations, instructions, or extra formatting.
+
 Content:
 {content}
 
 Summary:
             """,
-            input_variables=["content", "len"],
         )
 
-        # Initialize components
-        output_parser = StrOutputParser()
+        final_prompt_template = PromptTemplate(
+            input_variables=["content"],
+            template="""
+You are given summarized slide content from a tuberculosis drug discovery presentation, structured as:
+1. Batch 1: Presentation objectives (must be prioritized)
+2. Middle: Summarized body slides (supporting details)
+3. Batch N: Conclusion slides 
+
+Task:
+- From the provided content, select at most ten complete sentences that best represent the key takeaways.
+- You are NOT allowed to rephrase, summarize, or generate new interpretations.
+- Only select sentences that are already present verbatim in the provided content.
+- Try prioritizing sentences from Batch 1 (objectives) if they are informative.
+- After covering objectives, select other important sentences from the middle and conclusion content.
+- If fewer than ten good sentences are available, select as many as possible without inventing or completing any.
+
+Requirements:
+- Do not create bullet points, lists, or headings.
+- Do not add background information, explanations, or conclusions.
+- Do not modify abbreviations, terminology, or phrasing used in the slides.
+- Avoid introductory phrases like "In summary".
+
+Important:
+- Output should be a single coherent paragraph containing the selected sentences.
+- No extra formatting, no titles, no instructions.
+
+Content:
+{content}
+
+Summary:
+            """,
+        )
+
+        refinement_prompt_template = PromptTemplate(
+            input_variables=["content"],
+            template="""
+You are given a paragraph containing selected sentences from a tuberculosis drug discovery presentation.
+
+Task:
+- Rewrite to improve clarity, coherence, and logical flow.
+- Reorder sentences only if needed. Prefer to keep the original order unless it disrupts flow.
+- Correct minor grammar inconsistencies.
+- Do NOT add new information or rephrase technical terms.
+
+Requirements:
+- Preserve factual content.
+- Keep it as a single paragraph.
+- No bullet points, no extra context, no summaries.
+
+Content:
+{content}
+
+Refined Summary:
+            """,
+        )
+
+        # --- Chains ---
+        parser = StrOutputParser()
         llm = LanguageModel(model_type="ChatOllama").get_llm()
-        summary_chain = prompt_template | llm | output_parser
+        batch_summary_chain = batch_prompt_template | llm | parser
+        final_summary_chain = final_prompt_template | llm | parser
+        refinement_chain = refinement_prompt_template | llm | parser
 
-        # Break content into manageable batches
-        BATCH_SIZE = batch_size
-        batch_summaries = []
+        total_slides = len(content)
+        BATCH_1_SIZE = min(BATCH_1_SIZE, total_slides)
+        BATCH_N_SIZE = min(BATCH_N_SIZE, max(0, total_slides - BATCH_1_SIZE))
 
-        for batch_index in range(0, len(content), BATCH_SIZE):
-            batch = content[batch_index : batch_index + BATCH_SIZE]
-            cleaned_batch = "\n".join(slide.strip() for slide in batch if slide.strip())
+        batch_1 = content[:BATCH_1_SIZE]
+        batch_n = content[-BATCH_N_SIZE:] if BATCH_N_SIZE > 0 else []
+        middle_content = (
+            content[BATCH_1_SIZE : total_slides - BATCH_N_SIZE]
+            if total_slides > (BATCH_1_SIZE + BATCH_N_SIZE)
+            else []
+        )
+
+        # --- Process BATCH 1 ---
+        joined_batch_1 = "\n".join(slide.strip() for slide in batch_1 if slide.strip())
+        logger.info(f"--- BATCH 1 CONTENT ---\n{joined_batch_1}")
+        batch_1_summary = batch_summary_chain.invoke({"content": joined_batch_1})
+        logger.info(f"--- BATCH 1 SUMMARY ---\n{batch_1_summary}")
+
+        # --- Process Middle Batches ---
+        middle_summaries = []
+        for idx in range(0, len(middle_content), MIDDLE_BATCH_SIZE):
+            batch = middle_content[idx : idx + MIDDLE_BATCH_SIZE]
+            joined_batch = "\n".join(slide.strip() for slide in batch if slide.strip())
 
             logger.info(
-                f"--- BATCH {batch_index // BATCH_SIZE + 1} CONTENT ---\n{cleaned_batch}"
+                f"--- MIDDLE BATCH {idx // MIDDLE_BATCH_SIZE + 1} CONTENT ---\n{joined_batch}"
             )
-
-            SUMMARY_LENGTH = str(min(len(batch), max_summary_sentences))
-
-            summary = summary_chain.invoke(
-                {"content": cleaned_batch, "len": SUMMARY_LENGTH}
-            )
+            batch_summary = batch_summary_chain.invoke({"content": joined_batch})
             logger.info(
-                f"--- BATCH {batch_index // BATCH_SIZE + 1} SUMMARY ---\n{summary}"
+                f"--- MIDDLE BATCH {idx // MIDDLE_BATCH_SIZE + 1} SUMMARY ---\n{batch_summary}"
             )
 
-            batch_summaries.append(summary)
+            middle_summaries.append(batch_summary)
 
-        # Final summary generation
-        if len(batch_summaries) == 1:
-            final_summary = batch_summaries[0]
+        # --- Process Batch N ---
+        if batch_n:
+            joined_batch_n = "\n".join(
+                slide.strip() for slide in batch_n if slide.strip()
+            )
+            logger.info(f"--- BATCH N CONTENT ---\n{joined_batch_n}")
+            batch_n_summary = batch_summary_chain.invoke({"content": joined_batch_n})
+            logger.info(f"--- BATCH N SUMMARY ---\n{batch_n_summary}")
         else:
-            combined_summary = "\n".join(batch_summaries)
-            SUMMARY_LENGTH = str(max_summary_sentences)
-            final_summary = summary_chain.invoke(
-                {"content": combined_summary, "len": SUMMARY_LENGTH}
-            )
+            batch_n_summary = ""
 
-        logger.info("--- FINAL SUMMARY ---")
-        logger.info(final_summary)
+        # --- Combine for Final Summary ---
+        combined_summary_input = (
+            batch_1_summary
+            + "\n"
+            + "\n".join(middle_summaries)
+            + "\n"
+            + batch_n_summary
+        )
 
-        logger.debug("Completed short summarization successfully.")
-        return final_summary
+        logger.info("--- FINAL SUMMARY INPUT ---\n" + combined_summary_input)
+
+        final_summary = final_summary_chain.invoke({"content": combined_summary_input})
+        logger.info("--- FINAL SUMMARY ---\n" + final_summary)
+
+        refined_summary = refinement_chain.invoke({"content": final_summary})
+        logger.info("--- REFINED FINAL SUMMARY ---\n" + refined_summary)
+
+        logger.debug("Short summarization completed successfully.")
+        return refined_summary
 
     except ValueError as validation_error:
         logger.error(f"Validation error: {validation_error}")
@@ -273,3 +365,4 @@ def shorten_summary(content: str) -> str:
     except Exception as e:
         logger.exception("An unexpected error occurred during shorten summary.")
         return "An unexpected error occurred. Please try again later."
+    

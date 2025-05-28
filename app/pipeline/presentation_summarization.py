@@ -58,7 +58,7 @@ def gen_summary(
     RUN_TARGET_EXTRACTION = False
     RUN_DATE_EXTRACTION = False
     RUN_POST_HOOKS = True
-    SHORT_SUMMARY_THRESHOLD = 250
+    SHORT_SUMMARY_THRESHOLD = 500
 
     logger.info("[START] Generating document ID and metadata")
     document_id = uuid.uuid4()

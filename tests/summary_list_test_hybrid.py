@@ -3,15 +3,17 @@ import sys
 import random
 import textwrap
 
+
+
 # Add the parent directory to the system path for module imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.service.doc_loader.pdf_loader import load_pdf_document
 from app.core.logging_config import logger
-from app.service.lm.ppt.summarizers.short_summary import generate_short_summary
+from app.service.lm.ppt.summarizers.short_summary import filter_bullets_summary, generate_short_summary
 from app.service.doc_loader.pdf_to_img_loader import pdf_to_png_byte_streams
 from app.service.lm.ppt.hybrid_summarizers.slide_summary import create_summary_list
-
+from app.utils.text_processing import contains_bullet_points, count_words_nltk
 
 def test_create_summary_list(upload_dir: str):
     """
@@ -74,6 +76,16 @@ def test_create_summary_list(upload_dir: str):
         for line in wrapped_summary.split("\n"):
             print(f"| {line:<98} |")
         print("-" * 102)
+        
+        bullets_present = contains_bullet_points (short_summary)
+        if bullets_present:
+            
+            logger.info("Bullet points detected in the summary.")
+            short_summary = filter_bullets_summary(short_summary)
+        
+        
+        no_of_words = count_words_nltk(short_summary)
+        logger.info(f"Number of words in the summary: {no_of_words}")   
 
     except Exception as e:
         logger.error(f"Error generating short summary: {str(e)}")
