@@ -51,13 +51,13 @@ def gen_summary(
         Optional[PresentationSummary]: The presentation summary object if the process
         is successful, otherwise None.
     """
-    RUN_AUTHOR_EXTRACTION = False
-    RUN_TOPIC_EXTRACTION = False
-    RUN_SLIDE_EXTRACTION = False
-    RUN_SHORT_SUMMARY = False
-    RUN_TARGET_EXTRACTION = False
-    RUN_DATE_EXTRACTION = False
-    RUN_POST_HOOKS = True
+    RUN_AUTHOR_EXTRACTION = True
+    RUN_TOPIC_EXTRACTION = True
+    RUN_SLIDE_EXTRACTION = True
+    RUN_SHORT_SUMMARY = True
+    RUN_TARGET_EXTRACTION = True
+    RUN_DATE_EXTRACTION = True
+    RUN_POST_HOOKS = False
     SHORT_SUMMARY_THRESHOLD = 500
 
     logger.info("[START] Generating document ID and metadata")

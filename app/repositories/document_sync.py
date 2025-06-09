@@ -32,6 +32,30 @@ def save_document_sync(document: Document) -> UUID4:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save document: {str(e)}"
         )
+    
+
+def get_all_documents_sync() -> List[Document]:
+    """
+    Retrieve all documents from the collection.
+
+    Returns:
+        List[Document]: A list of all documents.
+    """
+    try:
+        collection = get_sync_collection("documents")
+
+        logger.debug("Retrieving all documents from collection")
+
+        cursor = collection.find({})
+        return [Document(**doc) for doc in cursor]
+
+    except PyMongoError as e:
+        logger.error(f"Error retrieving all documents (sync): {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving all documents: {str(e)}",
+        )
+
 
 def get_documents_by_authors_sync(authors: List[str]) -> List[Document]:
     """

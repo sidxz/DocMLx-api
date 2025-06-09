@@ -1,6 +1,7 @@
 # App specific
 uploads/
 private_test_data/
+exports/
 .DS_Store
 *.log
 .env
